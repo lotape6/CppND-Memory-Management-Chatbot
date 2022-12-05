@@ -43,36 +43,42 @@ ChatBot::~ChatBot() {
 ChatBot::ChatBot(ChatBot &otherChatbot) {
   std::cout << "ChatBot Copy-constructor" << std::endl;
 
-  _chatLogic = otherChatbot.GetChatLogicHandle();
+  SetChatLogicHandle(otherChatbot.GetChatLogicHandle());
+  _rootNode = otherChatbot._rootNode;
+  _currentNode = otherChatbot._currentNode;
 
-  auto image_ptr = otherChatbot.GetImageHandle();
-  if (image_ptr != nullptr) {
-    _image = static_cast<wxBitmap *>(malloc(sizeof(*image_ptr)));
-    memcpy(_image, image_ptr, sizeof(*image_ptr));
+  if (otherChatbot._image != NULL) {
+    _image = new wxBitmap(*otherChatbot._image);
   }
+
+  _chatLogic->SetChatbotHandle(this);
 }
 
 // move constructor
 ChatBot::ChatBot(ChatBot &&otherChatbot) {
   std::cout << "ChatBot Move-constructor" << std::endl;
 
-  _chatLogic = otherChatbot.GetChatLogicHandle();
+  _chatLogic = otherChatbot._chatLogic;
+  _rootNode = otherChatbot._rootNode;
+  _currentNode = otherChatbot._currentNode;
+  _image = otherChatbot._image;
 
-  _image = otherChatbot.GetImageHandle();
+  _chatLogic->SetChatbotHandle(this);
 
-  otherChatbot.SetChatLogicHandle(nullptr);
-  otherChatbot.SetRootNode(nullptr);
-  otherChatbot.SetCurrentNode(nullptr);
+  otherChatbot._chatLogic = nullptr;
+  otherChatbot._rootNode = nullptr;
+  otherChatbot._currentNode = nullptr;
+  otherChatbot._image = NULL;
 }
 
 // copy assignment
 ChatBot &ChatBot::operator=(ChatBot &otherChatbot) {
   std::cout << "ChatBot Copy-assignment" << std::endl;
 
-  _chatLogic = otherChatbot.GetChatLogicHandle();
+  SetChatLogicHandle(otherChatbot.GetChatLogicHandle());
 
   auto image_ptr = otherChatbot.GetImageHandle();
-  if (image_ptr != nullptr) {
+  if (image_ptr != NULL) {
     _image = static_cast<wxBitmap *>(malloc(sizeof(*image_ptr)));
     memcpy(_image, image_ptr, sizeof(*image_ptr));
   }
@@ -84,13 +90,20 @@ ChatBot &ChatBot::operator=(ChatBot &otherChatbot) {
 ChatBot &ChatBot::operator=(ChatBot &&otherChatbot) {
   std::cout << "ChatBot Move-assignment" << std::endl;
 
-  _chatLogic = otherChatbot.GetChatLogicHandle();
+  if (&otherChatbot == this) {
+    return *this;
+  }
 
-  _image = std::move(otherChatbot.GetImageHandle());
+  _chatLogic = otherChatbot._chatLogic;
+  _rootNode = otherChatbot._rootNode;
+  _currentNode = otherChatbot._currentNode;
+  _image = otherChatbot._image;
 
-  otherChatbot.SetChatLogicHandle(nullptr);
-  otherChatbot.SetRootNode(nullptr);
-  otherChatbot.SetCurrentNode(nullptr);
+  _chatLogic->SetChatbotHandle(this);
+
+  otherChatbot._rootNode = nullptr;
+  otherChatbot._currentNode = nullptr;
+  otherChatbot._image = NULL;
 
   return *this;
 }
